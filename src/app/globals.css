@@ -1,26 +1,193 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Brand: Deeploy - Core Color Palette */
+    --brand-deeploy-primary: 265 70% 20%;
+    --brand-deeploy-primary-hover: 265 70% 25%;
+    --brand-deeploy-accent: 265 85% 60%;
+    --brand-deeploy-accent-hover: 265 85% 55%;
+    
+    /* Backgrounds */
+    --background: 270 20% 98%;
+    --foreground: 265 15% 15%;
+    
+    /* Card & Surface */
+    --card: 0 0% 100%;
+    --card-foreground: 265 15% 15%;
+    
+    /* Popover */
+    --popover: 0 0% 100%;
+    --popover-foreground: 265 15% 15%;
+    
+    /* Primary - Deep Purple Brand */
+    --primary: var(--brand-deeploy-primary);
+    --primary-foreground: 0 0% 100%;
+    
+    /* Secondary - Light Gray */
+    --secondary: 270 15% 95%;
+    --secondary-foreground: 265 15% 15%;
+    
+    /* Muted - Subtle Backgrounds */
+    --muted: 270 15% 96%;
+    --muted-foreground: 265 8% 45%;
+    
+    /* Accent - Vibrant Purple */
+    --accent: var(--brand-deeploy-accent);
+    --accent-foreground: 0 0% 100%;
+    
+    /* Destructive */
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Borders & Inputs */
+    --border: 270 12% 88%;
+    --input: 270 12% 88%;
+    --ring: var(--brand-deeploy-accent);
+    
+    /* Border Radius */
+    --radius: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-sm: 0.375rem;
+    
+    /* Sidebar - Deep Purple Brand */
+    --sidebar-background: var(--brand-deeploy-primary);
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: var(--brand-deeploy-accent);
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 265 70% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 265 70% 25%;
+    --sidebar-ring: var(--brand-deeploy-accent);
+    
+    /* Spacing Scale */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Typography */
+    --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(var(--brand-deeploy-primary) / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(var(--brand-deeploy-primary) / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(var(--brand-deeploy-primary) / 0.1);
+    --shadow-xl: 0 20px 25px -5px hsl(var(--brand-deeploy-primary) / 0.15);
+    
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 265 70% 5%;
+    --foreground: 270 20% 98%;
+    
+    --card: 265 70% 8%;
+    --card-foreground: 270 20% 98%;
+    
+    --popover: 265 70% 8%;
+    --popover-foreground: 270 20% 98%;
+    
+    --primary: var(--brand-deeploy-accent);
+    --primary-foreground: 265 70% 10%;
+    
+    --secondary: 265 50% 15%;
+    --secondary-foreground: 270 20% 98%;
+    
+    --muted: 265 50% 15%;
+    --muted-foreground: 270 15% 65%;
+    
+    --accent: var(--brand-deeploy-accent);
+    --accent-foreground: 265 70% 10%;
+    
+    --destructive: 0 85% 50%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 265 50% 20%;
+    --input: 265 50% 20%;
+    --ring: var(--brand-deeploy-accent);
+    
+    --sidebar-background: 265 70% 10%;
+    --sidebar-foreground: 270 20% 98%;
+    --sidebar-primary: var(--brand-deeploy-accent);
+    --sidebar-primary-foreground: 265 70% 10%;
+    --sidebar-accent: 265 50% 18%;
+    --sidebar-accent-foreground: 270 20% 98%;
+    --sidebar-border: 265 50% 20%;
+    --sidebar-ring: var(--brand-deeploy-accent);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* TipTap Editor Styles */
+.tiptap {
+  outline: none;
+}
+
+.tiptap p {
+  margin: 0.5em 0;
+}
+
+.tiptap h1 {
+  font-size: 1.5em;
+  font-weight: 700;
+  margin: 1em 0 0.5em;
+}
+
+.tiptap h2 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 0.75em 0 0.5em;
+}
+
+.tiptap h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin: 0.75em 0 0.5em;
+}
+
+.tiptap ul {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+  list-style-type: disc;
+}
+
+.tiptap ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+  list-style-type: decimal;
+}
+
+.tiptap li {
+  margin: 0.25em 0;
+}
+
+.tiptap p.is-editor-empty:first-child::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }
