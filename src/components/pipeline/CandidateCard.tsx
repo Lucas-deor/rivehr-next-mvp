@@ -3,13 +3,15 @@
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { GripVertical, MapPin } from 'lucide-react'
+import { GripVertical, MapPin, User } from 'lucide-react'
 import type { JobCandidate } from '@/types/pipeline'
 
 interface CandidateCardProps {
   candidate: JobCandidate
   isDragOverlay?: boolean
+  onOpenProfile?: (candidateId: string) => void
 }
 
 function getInitials(name: string) {
@@ -21,7 +23,11 @@ function getInitials(name: string) {
     .toUpperCase()
 }
 
-export function CandidateCard({ candidate, isDragOverlay = false }: CandidateCardProps) {
+export function CandidateCard({
+  candidate,
+  isDragOverlay = false,
+  onOpenProfile,
+}: CandidateCardProps) {
   const {
     attributes,
     listeners,
@@ -42,7 +48,7 @@ export function CandidateCard({ candidate, isDragOverlay = false }: CandidateCar
       ref={isDragOverlay ? undefined : setNodeRef}
       style={isDragOverlay ? undefined : style}
       className={cn(
-        'bg-card border rounded-lg p-3 cursor-auto select-none',
+        'group bg-card border rounded-lg p-3 cursor-auto select-none',
         'hover:shadow-sm transition-shadow',
         isDragging && 'opacity-50',
         isDragOverlay && 'shadow-lg rotate-2 opacity-95'
@@ -80,6 +86,20 @@ export function CandidateCard({ candidate, isDragOverlay = false }: CandidateCar
             </p>
           )}
         </div>
+
+        {/* Ver perfil — only shown when not a drag overlay */}
+        {!isDragOverlay && onOpenProfile && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground shrink-0"
+            onClick={() => onOpenProfile(candidate.id)}
+            aria-label="Ver perfil do candidato"
+          >
+            <User className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
 
       {/* Skills */}

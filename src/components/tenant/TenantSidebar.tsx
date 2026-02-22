@@ -10,7 +10,8 @@ import {
   Users, 
   Building2, 
   Settings, 
-  LogOut 
+  LogOut,
+  Plus,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import type { User } from '@supabase/supabase-js'
@@ -51,7 +52,6 @@ export function TenantSidebar({ tenantSlug, user, userRole }: TenantSidebarProps
       name: 'Configurações',
       href: `/${tenantSlug}/configuracoes`,
       icon: Settings,
-      disabled: true,
     },
   ]
   
@@ -99,6 +99,16 @@ export function TenantSidebar({ tenantSlug, user, userRole }: TenantSidebarProps
           )
         })}
       </nav>
+
+      {/* Quick action */}
+      <div className="px-4 pb-2">
+        <Button asChild className="w-full" size="sm">
+          <Link href={`/${tenantSlug}/vagas/criar`}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
+            Nova Vaga
+          </Link>
+        </Button>
+      </div>
       
       <div className="p-4 border-t space-y-3">
         <div className="px-3 py-2">

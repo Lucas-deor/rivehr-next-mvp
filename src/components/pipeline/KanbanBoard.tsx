@@ -13,8 +13,10 @@ import {
 } from '@dnd-kit/core'
 import { createClient } from '@/lib/supabase/client'
 import { CandidateCard } from '@/components/pipeline/CandidateCard'
+import { CandidateProfileModal } from '@/components/pipeline/CandidateProfileModal'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 import type { PipelineStage, JobCandidate } from '@/types/pipeline'
 
 interface KanbanBoardProps {
@@ -26,9 +28,10 @@ interface KanbanBoardProps {
 interface DroppableColumnProps {
   stage: PipelineStage
   isOver: boolean
+  onOpenProfile: (candidateId: string) => void
 }
 
-function DroppableColumn({ stage, isOver }: DroppableColumnProps) {
+function DroppableColumn({ stage, isOver, onOpenProfile }: DroppableColumnProps) {
   const { setNodeRef } = useDroppable({ id: stage.id })
   const candidates = stage.candidates ?? []
 
@@ -57,7 +60,11 @@ function DroppableColumn({ stage, isOver }: DroppableColumnProps) {
       {/* Cards */}
       <div className="flex flex-col gap-2 px-2 pb-2 flex-1 min-h-[120px]">
         {candidates.map((candidate) => (
-          <CandidateCard key={candidate.id} candidate={candidate} />
+          <CandidateCard
+            key={candidate.id}
+            candidate={candidate}
+            onOpenProfile={onOpenProfile}
+          />
         ))}
       </div>
     </div>
@@ -68,12 +75,18 @@ export function KanbanBoard({ initialStages, jobId, tenantSlug }: KanbanBoardPro
   const [stages, setStages] = useState<PipelineStage[]>(initialStages)
   const [activeCandidate, setActiveCandidate] = useState<JobCandidate | null>(null)
   const [overColumnId, setOverColumnId] = useState<string | null>(null)
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
     })
   )
+
+  // Derive selected candidate object for the modal
+  const selectedCandidate: JobCandidate | null = selectedCandidateId
+    ? stages.flatMap((s) => s.candidates ?? []).find((c) => c.id === selectedCandidateId) ?? null
+    : null
 
   // --- Real-time subscription ---
   useEffect(() => {
@@ -152,6 +165,9 @@ export function KanbanBoard({ initialStages, jobId, tenantSlug }: KanbanBoardPro
     )
     if (!sourceStage || sourceStage.id === targetStageId) return
 
+    // Snapshot for rollback
+    const previousStages = stages
+
     // Optimistic update
     setStages((prev) => {
       const candidate = (sourceStage.candidates ?? []).find((c) => c.id === candidateId)
@@ -167,44 +183,63 @@ export function KanbanBoard({ initialStages, jobId, tenantSlug }: KanbanBoardPro
       })
     })
 
-    // Persist to DB (FASE 5 will handle errors/rollback)
-    const supabase = createClient()
-    await supabase
-      .from('job_candidates')
-      .update({ stage_id: targetStageId, updated_at: new Date().toISOString() })
-      .eq('id', candidateId)
+    // Persist to DB with error handling and rollback
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('job_candidates')
+        .update({ stage_id: targetStageId, updated_at: new Date().toISOString() })
+        .eq('id', candidateId)
+
+      if (error) throw new Error(error.message)
+    } catch (err) {
+      // Rollback optimistic update
+      setStages(previousStages)
+      toast.error('Não foi possível mover o candidato. Tente novamente.')
+      console.error('[KanbanBoard] handleDragEnd error:', err)
+    }
   }
 
   return (
-    <ScrollArea className="flex-1 w-full">
-      <DndContext
-        sensors={sensors}
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
-        <div className="flex gap-4 p-6 h-full min-h-[calc(100vh-130px)]">
-          {stages.map((stage) => (
-            <DroppableColumn
-              key={stage.id}
-              stage={stage}
-              isOver={overColumnId === stage.id && activeCandidate !== null}
-            />
-          ))}
-          {stages.length === 0 && (
-            <div className="flex items-center justify-center w-full text-muted-foreground">
-              Nenhuma etapa configurada para esta vaga
-            </div>
-          )}
-        </div>
+    <>
+      <ScrollArea className="flex-1 w-full">
+        <DndContext
+          sensors={sensors}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-4 p-6 h-full min-h-[calc(100vh-130px)]">
+            {stages.map((stage) => (
+              <DroppableColumn
+                key={stage.id}
+                stage={stage}
+                isOver={overColumnId === stage.id && activeCandidate !== null}
+                onOpenProfile={(candidateId) => setSelectedCandidateId(candidateId)}
+              />
+            ))}
+            {stages.length === 0 && (
+              <div className="flex items-center justify-center w-full text-muted-foreground">
+                Nenhuma etapa configurada para esta vaga
+              </div>
+            )}
+          </div>
 
-        <DragOverlay>
-          {activeCandidate && (
-            <CandidateCard candidate={activeCandidate} isDragOverlay />
-          )}
-        </DragOverlay>
-      </DndContext>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
+          <DragOverlay>
+            {activeCandidate && (
+              <CandidateCard candidate={activeCandidate} isDragOverlay />
+            )}
+          </DragOverlay>
+        </DndContext>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+
+      {/* Candidate profile modal */}
+      <CandidateProfileModal
+        candidate={selectedCandidate}
+        open={selectedCandidateId !== null}
+        onClose={() => setSelectedCandidateId(null)}
+      />
+    </>
   )
 }

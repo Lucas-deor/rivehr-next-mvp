@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getTenantContext } from '@/lib/tenant'
 import { requireAuth } from '@/lib/auth'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
+import { JobTitleEdit } from '@/components/jobs/JobTitleEdit'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Building2 } from 'lucide-react'
@@ -76,7 +77,7 @@ export default async function PipelinePage({ params }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-xl font-bold leading-tight">{job.title}</h1>
+            <JobTitleEdit jobId={jobId} initialTitle={job.title} />
             {companyName && (
               <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
                 <Building2 className="h-3.5 w-3.5" />
