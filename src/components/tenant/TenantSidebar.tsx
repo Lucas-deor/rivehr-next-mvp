@@ -12,6 +12,8 @@ import {
   Settings, 
   LogOut,
   Plus,
+  Bot,
+  ShieldCheck,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import type { User } from '@supabase/supabase-js'
@@ -47,6 +49,11 @@ export function TenantSidebar({ tenantSlug, user, userRole }: TenantSidebarProps
       href: `/${tenantSlug}/empresas`,
       icon: Building2,
       disabled: true,
+    },
+    {
+      name: 'QA Robot',
+      href: `/${tenantSlug}/qa-robot`,
+      icon: Bot,
     },
     {
       name: 'Configurações',
@@ -99,6 +106,19 @@ export function TenantSidebar({ tenantSlug, user, userRole }: TenantSidebarProps
           )
         })}
       </nav>
+
+      {/* Admin Panel — visível apenas para ultra_master_admin */}
+      {(userRole === 'ultra_master_admin') && (
+        <div className="px-4 pb-2">
+          <Link
+            href="/platform-admin"
+            className="flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors bg-primary/10 text-primary hover:bg-primary/20"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Admin Panel
+          </Link>
+        </div>
+      )}
 
       {/* Quick action */}
       <div className="px-4 pb-2">
