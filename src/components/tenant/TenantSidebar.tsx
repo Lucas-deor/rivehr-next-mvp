@@ -32,16 +32,14 @@ export function TenantSidebar({ tenantSlug, user, userRole }: TenantSidebarProps
       icon: LayoutDashboard,
     },
     {
-      name: 'Vagas',
-      href: `/${tenantSlug}/vagas`,
+      name: 'Ver Vagas',
+      href: `/${tenantSlug}/vagas/ver-vagas`,
       icon: Briefcase,
-      disabled: true,
     },
     {
-      name: 'Candidatos',
-      href: `/${tenantSlug}/candidatos`,
+      name: 'Membros',
+      href: `/${tenantSlug}/membros`,
       icon: Users,
-      disabled: true,
     },
     {
       name: 'Empresas',
@@ -69,7 +67,7 @@ export function TenantSidebar({ tenantSlug, user, userRole }: TenantSidebarProps
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navigation.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           
           if (item.disabled) {
             return (

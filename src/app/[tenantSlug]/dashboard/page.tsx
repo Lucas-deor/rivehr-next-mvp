@@ -1,12 +1,68 @@
 import { getTenantContext } from '@/lib/tenant'
 import { requireAuth } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Building2, Users, Briefcase, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
+import { buildTenantPath } from '@/lib/tenant-utils'
+import { Button } from '@/components/ui/button'
+import { ArrowRight } from 'lucide-react'
 
 export default async function DashboardPage() {
   const user = await requireAuth()
-  const { tenantSlug, userRole } = await getTenantContext()
-  
+  const { tenantSlug, userRole, tenantId } = await getTenantContext()
+
+  const supabase = await createClient()
+
+  // Fetch stats in parallel
+  const [jobsResult, membersResult, companiesResult, candidatesResult] = await Promise.all([
+    supabase.from('jobs').select('id, status', { count: 'exact' }).eq('organization_id', tenantId),
+    supabase.from('members').select('id', { count: 'exact' }).eq('organization_id', tenantId),
+    supabase.from('companies').select('id', { count: 'exact' }).eq('organization_id', tenantId),
+    supabase.from('job_candidates').select('id', { count: 'exact' }).in(
+      'job_id',
+      (await supabase.from('jobs').select('id').eq('organization_id', tenantId)).data?.map((j) => j.id) ?? []
+    ),
+  ])
+
+  const totalJobs = jobsResult.count ?? 0
+  const activeJobs = jobsResult.data?.filter((j) => j.status === 'active').length ?? 0
+  const totalMembers = membersResult.count ?? 0
+  const totalCompanies = companiesResult.count ?? 0
+  const totalCandidates = candidatesResult.count ?? 0
+
+  const stats = [
+    {
+      title: 'Vagas Ativas',
+      value: activeJobs,
+      total: totalJobs,
+      description: `${totalJobs} vagas no total`,
+      icon: Briefcase,
+      href: buildTenantPath(tenantSlug, '/vagas/ver-vagas'),
+    },
+    {
+      title: 'Membros',
+      value: totalMembers,
+      description: 'No banco de talentos',
+      icon: Users,
+      href: buildTenantPath(tenantSlug, '/membros'),
+    },
+    {
+      title: 'Empresas Clientes',
+      value: totalCompanies,
+      description: 'Organizações cadastradas',
+      icon: Building2,
+      href: null,
+    },
+    {
+      title: 'Total de Candidaturas',
+      value: totalCandidates,
+      description: 'Candidatos em pipelines',
+      icon: TrendingUp,
+      href: null,
+    },
+  ]
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -20,100 +76,55 @@ export default async function DashboardPage() {
           </p>
         )}
       </div>
-      
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <Card key={stat.title} className="relative">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                <Icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
+                {stat.href && (
+                  <Button variant="link" size="sm" className="p-0 h-auto mt-2 text-xs" asChild>
+                    <Link href={stat.href}>
+                      Ver detalhes <ArrowRight className="h-3 w-3 ml-1" />
+                    </Link>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+
+      {/* Quick access */}
+      <div className="mt-8 grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total de Vagas
-            </CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle className="text-base">Acesso Rápido</CardTitle>
+            <CardDescription>Atalhos para as principais funcionalidades</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-xs text-muted-foreground">
-              Será implementado na FASE4
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Candidatos
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-xs text-muted-foreground">
-              Será implementado na FASE4
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Empresas Clientes
-            </CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-xs text-muted-foreground">
-              Será implementado na FASE4
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Taxa de Conversão
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">--</div>
-            <p className="text-xs text-muted-foreground">
-              Será implementado na FASE4
-            </p>
+          <CardContent className="flex flex-col gap-2">
+            <Button variant="outline" className="w-full justify-start gap-2" asChild>
+              <Link href={buildTenantPath(tenantSlug, '/vagas/ver-vagas')}>
+                <Briefcase className="h-4 w-4" />
+                Ver todas as vagas
+              </Link>
+            </Button>
+            <Button variant="outline" className="w-full justify-start gap-2" asChild>
+              <Link href={buildTenantPath(tenantSlug, '/membros')}>
+                <Users className="h-4 w-4" />
+                Banco de talentos
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
-      
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>🎉 Autenticação Configurada!</CardTitle>
-          <CardDescription>
-            FASE 3 completa - Sistema de autenticação com OTP e middleware de tenant resolution implementado
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            As próximas funcionalidades (criação de vagas, gestão de candidatos, etc.) serão implementadas nas fases seguintes.
-          </p>
-          <ul className="text-sm space-y-2">
-            <li className="flex items-center">
-              <span className="text-green-500 mr-2">✓</span>
-              Autenticação com OTP via email
-            </li>
-            <li className="flex items-center">
-              <span className="text-green-500 mr-2">✓</span>
-              Middleware com validação de tenant
-            </li>
-            <li className="flex items-center">
-              <span className="text-green-500 mr-2">✓</span>
-              Proteção de rotas automática
-            </li>
-            <li className="flex items-center">
-              <span className="text-green-500 mr-2">✓</span>
-              Sistema preparado para RBAC
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   )
 }
